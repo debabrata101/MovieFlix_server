@@ -50,12 +50,19 @@ async function run() {
     const moviesCollection = moviesDB.collection("moviesCollection");
     const seriesCollection = moviesDB.collection("seriesCollection");
     const userCollection = userDB.collection("userCollection");
-    // product....>
+    // post---------------....->
     app.post("/movies", verifyToken, async (req, res) => {
       const moviesData = req.body;
-      const result = await moviesCollection.insertOne(shoeData);
+      const result = await moviesCollection.insertOne(moviesData);
       res.send(result);
     });
+    app.post("/series", verifyToken, async (req, res) => {
+      const seriesData = req.body;
+      const result = await seriesCollection.insertOne(seriesData);
+      res.send(result);
+    });
+
+    // get--------------------->
     app.get("/movies", async (req, res) => {
       const moviesData = moviesCollection.find();
       const result = await moviesData.toArray();
@@ -68,6 +75,20 @@ async function run() {
       });
       res.send(moviesData);
     });
+    app.get("/series", async (req, res) => {
+      const seriesData = seriesCollection.find();
+      const result = await seriesData.toArray();
+      res.send(result);
+    });
+    app.get("/series/:id", async (req, res) => {
+      const id = req.params.id;
+      const seriesData = await seriesCollection.findOne({
+        _id: new ObjectId(id),
+      });
+      res.send(seriesData);
+    });
+
+    // patch--------------->
     app.patch("/movies/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const upData = req.body;
@@ -79,6 +100,19 @@ async function run() {
       );
       res.send(moviesData);
     });
+    app.patch("/series/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const upData = req.body;
+      const seriesData = await seriesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: upData,
+        }
+      );
+      res.send(seriesData);
+    });
+
+    // delete--------------------->
     app.delete("/movies/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const moviesData = await moviesCollection.deleteOne({
