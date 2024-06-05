@@ -8,6 +8,7 @@ const port = 5000;
 app.use(cors());
 app.use(express.json());
 
+
 function createToken(user) {
   const Token = jwt.sign(
     {
@@ -25,11 +26,9 @@ function verifyToken(req, res, next) {
   if (!verify?.email) {
     return res.send("you are not authorized");
   }
-  req.user = jwt.verify.email;
+  req.user = jwt.verify?.email;
   next();
 }
-
-
 
 const uri =
   "mongodb+srv://debabratacmt:6hSKLrkyYr2aRUL5@cluster0.kegnvjv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
@@ -46,10 +45,11 @@ async function run() {
   try {
     await client.connect();
     const moviesDB = client.db("moviesDB");
-    const userDB = client.db("userDB");
+    const userData = client.db("userData");
     const moviesCollection = moviesDB.collection("moviesCollection");
     const seriesCollection = moviesDB.collection("seriesCollection");
-    const userCollection = userDB.collection("userCollection");
+    const userCollectionData = userData.collection("userCollectionData");
+
     // post---------------....->
     app.post("/movies", verifyToken, async (req, res) => {
       const moviesData = req.body;
@@ -129,10 +129,10 @@ async function run() {
     });
 
     //user------------>
-    app.post("/user", verifyToken, async (req, res) => {
+    app.post("/users", verifyToken, async (req, res) => {
       const user = req.body;
       const token = createToken(user);
-      const isUserExist = await userCollection.findOne({ email: user?.email });
+      const isUserExist = await userCollectionData.findOne({ email: user?.email });
       if (isUserExist?._id) {
         return res.send({
           status: "success",
@@ -140,26 +140,26 @@ async function run() {
           token,
         });
       }
-      await userCollection.insertOne(user);
+      await userCollectionData.insertOne(user);
 
       return res.send({ token });
     });
 
-    app.get("/user/get/:id", async (req, res) => {
+    app.get("/users/get/:id", async (req, res) => {
       const id = req.params.id;
-      const result = await userCollection.findOne({ _id: new ObjectId(id) });
+      const result = await userCollectionData.findOne({ _id: new ObjectId(id) });
       res.send(result);
     });
-    app.get("/user/:email", async (req, res) => {
+    app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
 
-      const result = await userCollection.findOne({ email });
+      const result = await userCollectionData.findOne({ email });
       res.send(result);
     });
-    app.patch("/user/:email", async (req, res) => {
+    app.patch("/users/:email", async (req, res) => {
       const email = req.params.email;
       const userData = req.body;
-      const result = await userCollection.updateOne(
+      const result = await userCollectionData.updateOne(
         { email },
         { $set: userData },
         {
@@ -169,16 +169,23 @@ async function run() {
       res.send(result);
     });
 
-    console.log(" Database connected to MongoDB!");
+    console.log("Database connected to MongoDB!");
+  } catch (err) {
+    console.error("Error connecting to database:", err);
   } finally {
   }
 }
-run().catch(console.dir);
+
+run().catch(console.error);
 
 app.get("/", (req, res) => {
   res.send("Route is Working");
 });
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Internal Server Error');
+});
 
-app.listen(port, (req, res) => {
-  console.log("App is listening on port :", port);
+app.listen(port, () => {
+  console.log(`App is listening on port ${port}`);
 });
