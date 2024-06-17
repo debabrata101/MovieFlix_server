@@ -8,25 +8,18 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-function createToken(user) {
-  const Token = jwt.sign(
-    {
-      email: user?.email,
-    },
-    "secret",
-    { expiresIn: "7d" }
-  );
-  return Token;
-}
-
-function verifyToken(req, res, next) {
-  const token = req.headers.authorization.split(" ")[1];
-  const verify = jwt.verify(token, "secret");
-  if (!verify?.email) {
-    return res.send("you are not authorized");
+const verifyToken = async (req ,res,next) =>{
+  const token = req.cookies?.token;
+  if(!token){
+    return res.status(401).send({message:'unauthorized access'})
   }
-  req.user = jwt.verify?.email;
-  next();
+  jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,decoded) => {
+    if(err){
+      return res.status(401).send({message:'unauthorized access'})
+    }
+    res.user =decoded;
+    next();
+  })
 }
 
 const uri = process.env.DATABASE_URL;
