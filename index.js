@@ -3,11 +3,10 @@ const app = express();
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
-const port = 5000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-
 
 function createToken(user) {
   const Token = jwt.sign(
@@ -30,8 +29,7 @@ function verifyToken(req, res, next) {
   next();
 }
 
-const uri =
-  "mongodb+srv://debabratacmt:6hSKLrkyYr2aRUL5@cluster0.kegnvjv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = process.env.DATABASE_URL;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -132,7 +130,9 @@ async function run() {
     app.post("/users", verifyToken, async (req, res) => {
       const user = req.body;
       const token = createToken(user);
-      const isUserExist = await userCollectionData.findOne({ email: user?.email });
+      const isUserExist = await userCollectionData.findOne({
+        email: user?.email,
+      });
       if (isUserExist?._id) {
         return res.send({
           status: "success",
@@ -147,7 +147,9 @@ async function run() {
 
     app.get("/users/get/:id", async (req, res) => {
       const id = req.params.id;
-      const result = await userCollectionData.findOne({ _id: new ObjectId(id) });
+      const result = await userCollectionData.findOne({
+        _id: new ObjectId(id),
+      });
       res.send(result);
     });
     app.get("/users/:email", async (req, res) => {
@@ -183,7 +185,7 @@ app.get("/", (req, res) => {
 });
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).send('Internal Server Error');
+  res.status(500).send("Internal Server Error");
 });
 
 app.listen(port, () => {
